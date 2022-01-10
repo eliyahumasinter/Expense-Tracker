@@ -1,0 +1,23 @@
+<h1>Expense Tracker</h1>
+
+<!-- Enter new data (form) -->
+
+<div class="form">
+   <form  method="POST">
+       {% csrf_token %}
+        <fieldset>
+            {{ form }}
+           <button class="btn btn-light" type="submit">Add Entry</button>
+        </fieldset>
+   </form>
+</div>
+
+<!-- Display Data -->
+{% for entry in data %}
+    <a href="{% url 'data-entry' entry.pk %}"><b>{{ entry.title }}</b></a>
+    ${{ entry.price }}
+    {% for tag in entry.tags.all %}
+        <em><a href="{% url 'data-tag' tag.id %}">{{ tag }}</em></a>
+    {% endfor %}
+    <hr><br>
+{% endfor %}

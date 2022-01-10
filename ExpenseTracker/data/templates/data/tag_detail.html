@@ -1,0 +1,12 @@
+<h1>Tag Detail for {{ tag }}</h1>
+
+{% for entry in tag.entry_set.all %}
+    <a href="{% url 'data-entry' entry.pk %}"><b>{{ entry.title }}</b></a>
+    ${{ entry.price }}
+    {% for tag in entry.tags.all %}
+        <em><a href="{% url 'data-tag' tag.id %}">{{ tag }}</em></a>
+    {% endfor %}
+    <hr><br>
+{% endfor %}
+
+<h4>Total: {{ total }}</h4>
