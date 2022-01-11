@@ -1,26 +1,51 @@
 from django.shortcuts import render, redirect
 from .models import Entry, EntryTag
-from .forms import AddEntryForm
+from .forms import AddEntryForm, AddEntryTagForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, DeleteView, UpdateView
-#from django.http import HttpResponse
+from django.db.models import Sum
+# from django.http import HttpResponse
 
 
-class DataListView(ListView):  # home
+class DataListView(LoginRequiredMixin, ListView):  # home
     model = Entry
     template_name = 'data/home.html'
     context_object_name = 'data'
     ordering = ['-date_posted']
-    #paginate_by = 25
+    # paginate_by = 25
+
+    def get_queryset(self):
+        return Entry.objects.filter(user=self.request.user.id)
 
     def get_context_data(self, **kwargs):
         context = super(DataListView, self).get_context_data(**kwargs)
-        context['form'] = AddEntryForm()
+        context['AddEntryForm'] = AddEntryForm()
+        context['AddTagForm'] = AddEntryTagForm()
+        context['tagtotal'] = getTagTotal(userid=self.request.user.id)
+        context['total'] = Entry.objects.aggregate(Sum('price'))
+        print(context['total'], 'total pricelkajsdflkadsj')
         return context
 
     def post(self, request, *args, **kwargs):  # Post request
-        form = AddEntryForm(request.POST)
-        if form.is_valid():
-            form.save()
+        entryform = AddEntryForm(request.POST)
+        if entryform.is_valid():
+            data = entryform.cleaned_data
+            title = data['title']
+            price = data['price']
+            tags = data['tags']
+            user = request.user.profile
+            entry = Entry(title=title, price=price, user=user)
+            entry.save()
+            entry.tags.set(tags)
+
+        tagform = AddEntryTagForm(request.POST)
+        if tagform.is_valid():
+            data = tagform.cleaned_data
+            tag = data['tag']
+            user = request.user.profile
+            entry = EntryTag(tag=tag, user=request.user.profile)
+            entry.save()
+
         return redirect("data-home")
 
 
@@ -53,3 +78,17 @@ class TagDetailView(DetailView):
             context['total'] += entry.price
         context['total'] = round(context['total'], 2)
         return context
+
+
+def getTagTotal(userid, timeperiod="All"):
+    tagtotal = {}  # tag:total_cost
+    tags = EntryTag.objects.filter(user=userid)
+    for tag in tags:
+        for i in tag.entry_set.all():
+            try:
+                tagtotal[tag] += i.price
+            except:
+                tagtotal[tag] = i.price
+
+
+    return (tagtotal)

@@ -1,17 +1,24 @@
+{% extends 'data/base.html' %}
+
+{% block content %}
 <h1>Expense Tracker</h1>
+<h2>Welcom, {{ user.username }}</h2>
 
 <!-- Enter new data (form) -->
+<fieldset>
+    <form  method="POST">
+        {% csrf_token %}
+        {{ AddEntryForm }}
+        <button type="submit" style="float: right;">Add Entry</button>
+    </form>
 
-<div class="form">
-   <form  method="POST">
-       {% csrf_token %}
-        <fieldset>
-            {{ form }}
-           <button class="btn btn-light" type="submit">Add Entry</button>
-        </fieldset>
-   </form>
-</div>
-
+    <form  method="POST">
+        {% csrf_token %}
+        {{ AddTagForm }}
+        <button type="submit">Add Tag</button>
+    </form>
+</fieldset>
+<br>
 <!-- Display Data -->
 {% for entry in data %}
     <a href="{% url 'data-entry' entry.pk %}"><b>{{ entry.title }}</b></a>
@@ -21,3 +28,12 @@
     {% endfor %}
     <hr><br>
 {% endfor %}
+
+<br>
+{% for tag, total in tagtotal.items %}
+    {{ tag }}: ${{ total }}<br>
+{% endfor %}
+
+<hr>Total: ${{ total.price__sum }}
+
+{% endblock %}

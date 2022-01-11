@@ -1,3 +1,6 @@
+{% extends 'data/base.html' %}
+
+{% block content %}
 <form  method="POST">
      {% csrf_token %}
       <fieldset>
@@ -8,3 +11,4 @@
           <button type="submit">Update</button>
       </div>
  </form>
+{% endblock %}

@@ -1,3 +1,6 @@
+{% extends 'data/base.html' %}
+
+{% block content %}
 <form  method="POST">
      {% csrf_token %}
       <fieldset>
@@ -9,3 +12,5 @@
           <a href="{% url 'data-entry' object.id %} ">Cancel</a>
       </div>
  </form>
+
+{% endblock %}

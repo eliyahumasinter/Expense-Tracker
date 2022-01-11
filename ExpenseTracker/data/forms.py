@@ -3,6 +3,7 @@ from .models import Entry, EntryTag
 
 
 class AddEntryForm(forms.ModelForm):
+
     title = forms.CharField()
     price = forms.FloatField()
     tags = forms.ModelMultipleChoiceField(
@@ -13,3 +14,11 @@ class AddEntryForm(forms.ModelForm):
     class Meta:
         model = Entry
         fields = ['title', 'price', 'tags']
+
+
+class AddEntryTagForm(forms.ModelForm):
+    tag = forms.CharField()
+
+    class Meta:
+        model = EntryTag
+        fields = ['tag']
