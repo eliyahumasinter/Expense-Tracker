@@ -2,8 +2,24 @@ from django import forms
 from .models import Entry, EntryTag
 
 
-class AddEntryForm(forms.ModelForm):
+def AddEntryFormFunc(id):
+    class AddEntryForm(forms.ModelForm):
 
+        title = forms.CharField()
+        price = forms.FloatField()
+        tags = forms.ModelMultipleChoiceField(
+            queryset=EntryTag.objects.filter(user=id),
+            widget=forms.CheckboxSelectMultiple,
+            required=False)
+
+        class Meta:
+            model = Entry
+            fields = ['title', 'price', 'tags']
+
+    return AddEntryForm
+
+
+class AddEntryForm(forms.ModelForm):
     title = forms.CharField()
     price = forms.FloatField()
     tags = forms.ModelMultipleChoiceField(

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Entry, EntryTag
-from .forms import AddEntryForm, AddEntryTagForm
-from django.contrib.auth.mixins import LoginRequiredMixin
+from .forms import AddEntryFormFunc, AddEntryTagForm, AddEntryForm
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, DeleteView, UpdateView
 from django.db.models import Sum
 # from django.http import HttpResponse
@@ -19,11 +19,11 @@ class DataListView(LoginRequiredMixin, ListView):  # home
 
     def get_context_data(self, **kwargs):
         context = super(DataListView, self).get_context_data(**kwargs)
-        context['AddEntryForm'] = AddEntryForm()
+        context['AddEntryForm'] = AddEntryFormFunc(self.request.user.id)
         context['AddTagForm'] = AddEntryTagForm()
         context['tagtotal'] = getTagTotal(userid=self.request.user.id)
-        context['total'] = Entry.objects.aggregate(Sum('price'))
-        print(context['total'], 'total pricelkajsdflkadsj')
+        context['total'] = Entry.objects.filter(
+            user=self.request.user.id).aggregate(Sum('price'))
         return context
 
     def post(self, request, *args, **kwargs):  # Post request
@@ -49,22 +49,43 @@ class DataListView(LoginRequiredMixin, ListView):  # home
         return redirect("data-home")
 
 
-class DataDetailView(DetailView):
+class DataDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Entry
 
+    def test_func(self):
+        entry = self.get_object()
+        if self.request.user.profile == entry.user:
+            return True
+        else:
+            return False
 
-class DataDeleteView(DeleteView):
+
+class DataDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Entry
     success_url = '/'
 
+    def test_func(self):
+        entry = self.get_object()
+        if self.request.user.profile == entry.user:
+            return True
+        else:
+            return False
 
-class DataUpdateView(UpdateView):
+
+class DataUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Entry
     fields = ['title', 'price', 'tags']
     success_url = '/'
 
+    def test_func(self):
+        entry = self.get_object()
+        if self.request.user.profile == entry.user:
+            return True
+        else:
+            return False
 
-class TagDetailView(DetailView):
+
+class TagDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = EntryTag
     template_name = 'data/tag_detail.html'
     context_object_name = 'tag'
@@ -79,6 +100,13 @@ class TagDetailView(DetailView):
         context['total'] = round(context['total'], 2)
         return context
 
+    def test_func(self):
+        entry = self.get_object()
+        if self.request.user.profile == entry.user:
+            return True
+        else:
+            return False
+
 
 def getTagTotal(userid, timeperiod="All"):
     tagtotal = {}  # tag:total_cost
@@ -89,6 +117,5 @@ def getTagTotal(userid, timeperiod="All"):
                 tagtotal[tag] += i.price
             except:
                 tagtotal[tag] = i.price
-
 
     return (tagtotal)

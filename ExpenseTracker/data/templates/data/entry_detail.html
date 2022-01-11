@@ -1,6 +1,6 @@
 {% extends 'data/base.html' %}
-
 {% block content %}
+
 <h1>Entry Detail for {{ object.title }}</h1>
 <h3>Price: </h3>${{ object.price}}
 <hr>
@@ -15,7 +15,10 @@
     {% endfor %}
 </ul>
 {% endif %}
-
 <a href="{% url 'data-delete' object.id %}">Delete Entry</a>
 <a href="{% url 'data-update' object.id %}">Update Entry</a>
+
 {% endblock %}
+
+
+
