@@ -4,10 +4,9 @@
   <head>
 
     <title>{% block title %}{% endblock %}</title>
-    {% block extra_head %}
-    {% endblock %}
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
   </head>
-  <body>
+  <body class="bg-yellow-100">
     {% block body %}
 
     {% if messages %}
@@ -20,7 +19,7 @@
       </ul>
     </div>
     {% endif %}
-
+<!--
     <div>
       <ul>
         <li><a href="{% url 'data-home' %}">Home</a></li>
@@ -33,11 +32,48 @@
         <li><a href="{% url 'account_signup' %}">Sign Up</a></li>
         {% endif %}
       </ul>
-    </div>
+    </div> -->
+
+    <header class="text-gray-600 body-font bg-purple-900">
+      <div class="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
+        <a href="{% url 'data-home' %}" class="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="w-10 h-10 text-white p-2 bg-blue-500 rounded-full" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+          </svg>
+          <span class="ml-3 text-xl">Expense Tracker</span>
+        </a>
+
+        <nav class="md:mr-auto md:ml-4 md:py-1 md:pl-4 md:border-l md:border-gray-400 flex flex-wrap  text-base ">
+          <a href="{% url 'account_login' %}" class="mr-5 hover:text-gray-900">Home</a>
+        </nav>
+
+        {% if user.is_authenticated %}
+
+        <a href="{% url 'account_email' %}" class="mr-5 hover:text-gray-900">Change Email</a>
+        <a href="{% url 'profile' %}" class="mr-5 hover:text-gray-900">Profile</a>
+        <a href="{% url 'account_logout' %}"><button class="inline-flex items-center bg-gray-100 border-0 py-1 px-3 focus:outline-none hover:bg-gray-200 rounded text-base mt-4 md:mt-0">Log Out
+          <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="w-4 h-4 ml-1" viewBox="0 0 24 24">
+            <path d="M5 12h14M12 5l7 7-7 7"></path>
+          </svg>
+        </button></a>
+        {% else %}
+        <a href="{% url 'account_login' %}" class="mr-5 hover:text-gray-900">Sign In</a>
+        <a href="{% url 'account_signup' %}" class="mr-5 hover:text-gray-900">Sign Up</a>
+        {% endif %}
+      </div>
+      <!--    {% if user.first_name %}
+        <span class="text-gray-700 font-semibold content-center">Welcome, {{ user.first_name }}</span>
+        {% else %}
+        <span class="text-gray-700 font-semibold content-center">Welcome, {{ user.username }}</span>
+        {% endif %} -->
+    </header>
+    {% endblock %}
+
+    <div class="container px-5 py-12 mx-auto">
     {% block content %}
     {% endblock %}
-    {% endblock %}
-    {% block extra_body %}
-    {% endblock %}
+    </div>
+
+
   </body>
 </html>

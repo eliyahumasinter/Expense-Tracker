@@ -1,55 +1,72 @@
 {% extends 'data/base.html' %}
+{% load tailwind_filters %}
 
 {% block content %}
 
 
-<h1>Expense Tracker</h1>
 
-{% if user.first_name %}
-<h2>Welcome, {{ user.first_name }}</h2>
-{% else %}
-<h2>Welcome, {{ user.username }}</h2>
-{% endif %}
-<!-- Enter new data (form) -->
-<fieldset>
-    <form  method="POST">
-        {% csrf_token %}
-        {{ AddEntryForm }}
-        <button type="submit" style="float: right;">Add Entry</button>
-    </form>
 
-    <form  method="POST">
+<div class="container px-0 mx-auto sm:px-10 lg:px-20 ">
+
+ <form  method="POST">
+    {% csrf_token %}
+    {{ AddEntryForm }}
+    <button type="submit" class="px-8 rounded-r-lg bg-purple-800  text-gray-800 font-bold p-4 uppercase border-yellow-500 border-t border-b border-r">Add Entry</button>
+</form>
+
+
+<!-- Add a tag form -->
+    <form  method="POST" class="m-4 flex float-right">
         {% csrf_token %}
-        {{ AddTagForm }}
-        <button type="submit">Add Tag</button>
+        <input class="rounded-l-lg p-4 border-t mr-0 border-b border-l text-gray-800 bg-gray-200
+            border-gray-200 bg-white" type="text" name="tag" id="id_tag" placeholder="some tag" required/>
+        <button class="px-8 rounded-r-lg bg-purple-800  text-gray-800 font-bold p-4 uppercase border-yellow-500 border-t border-b border-r">Add Tag</button>
     </form>
-</fieldset>
-<br>
-<hr>
-<!-- Display Data -->
-{% for entry in data %}
-    <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}"><b>{{ entry.title }}</b></a>
-    ${{ entry.price }}
-    {% for tag in entry.tags.all %}
-        <em><a href="{% url 'data-tag' title=tag pk=tag.id %}">{{ tag }}</em></a>
+</div>
+
+
+<div class="container px-0 mx-auto sm:px-10 lg:px-20 pt-20">
+    <!-- Display Data -->
+    {% for entry in data %}
+        <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}">
+            <div class="m-5 py-3 px-3 bg-red-200 rounded-full hover:bg-red-300">
+                <span class="font-bold capitalize text-black">{{ entry.title }}</span>
+                <span class="pl-4">${{ entry.price }}</span>
+                {% for tag in entry.tags.all %}
+                    <a href="{% url 'data-tag' title=tag pk=tag.id %}"
+                    class="italic text-gray-800 lowercase bg-gray-100 hover:bg-gray-300 px-2 rounded-full float-right ml-1">{{ tag }}</a>
+                {% endfor %}
+            </div>
+        </a>
+    {% empty %}
+        You have no entries yet
     {% endfor %}
-    <hr><br>
-{% empty %}
-You have no entries yet
-{% endfor %}
 
-<br>
+    <!-- table -->
+    <div class="w-2/3 mx-auto py-5">
+        <table class="border-collapse border border-gray-600 bg-gray-400" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Tag</th>
+              <th>Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tag, total in tagtotal.items %}
+            <tr>
+                <td class="border border-gray-600 pl-2">{{ tag }}</td>
+                <td class="border border-gray-600 pl-2">${{ total }}</td>
+            </tr>
+            {% endfor %}
+            {% if tagtotal %}
+                <tr>
+                    <td class="border border-gray-600 bg-gray-500">Total</td>
+                    <td class="border border-gray-600 bg-gray-500">${{ total.price__sum }}</td>
+                </tr>
+            {% endif %}
+          </tbody>
+        </table>
+    </div>
 
-{% for tag, total in tagtotal.items %}
-    <p>{{ tag }}: ${{ total }}</p>
-
-{% endfor %}
-
-
-{% if tagtotal %}
-<hr>
-Total: ${{ total.price__sum }}
-{% endif %}
-
-
+</div>
 {% endblock %}
