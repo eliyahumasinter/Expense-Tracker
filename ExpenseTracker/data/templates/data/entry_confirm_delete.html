@@ -9,7 +9,7 @@
       </fieldset>
       <div>
           <button type="submit">Yes, Delete</button>
-          <a href="{% url 'data-entry' object.id %} ">Cancel</a>
+          <a href="{% url 'data-entry' title=object.title pk=object.id %} ">Cancel</a>
       </div>
  </form>
 

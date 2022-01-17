@@ -1,5 +1,6 @@
 {% extends 'data/base.html' %}
-
+{% load socialaccount %}
+{% providers_media_js %}
 {% block content %}
 <form method="POST">
     {% csrf_token %}
@@ -14,4 +15,7 @@
 <div>
     <small>Need an Account? <a href="{% url 'register' %}">Sign Up Now</a></small>
 </div>
+
+<button><a href="{% provider_login_url "facebook" method="oauth2" %}">Facebook Login</a></button>
+
 {% endblock content %}

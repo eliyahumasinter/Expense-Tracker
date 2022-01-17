@@ -74,8 +74,19 @@ class DataDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 class DataUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Entry
+
     fields = ['title', 'price', 'tags']
     success_url = '/'
+
+    def get_queryset(self):
+        return Entry.objects.filter(user=self.request.user.id)
+
+    def get_context_data(self, **kwargs):
+        self.object = self.get_object()
+        context = super(DataUpdateView, self).get_context_data(**kwargs)
+        context['entry'] = Entry.objects.filter(id=self.object.id).first()
+        context['form'] = AddEntryFormFunc(self.request.user.id)
+        return context
 
     def test_func(self):
         entry = self.get_object()

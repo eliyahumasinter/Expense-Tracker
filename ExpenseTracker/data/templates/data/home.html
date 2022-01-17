@@ -4,8 +4,12 @@
 
 
 <h1>Expense Tracker</h1>
-<h2>Welcome, {{ user.username }}</h2>
 
+{% if user.first_name %}
+<h2>Welcome, {{ user.first_name }}</h2>
+{% else %}
+<h2>Welcome, {{ user.username }}</h2>
+{% endif %}
 <!-- Enter new data (form) -->
 <fieldset>
     <form  method="POST">
@@ -21,21 +25,31 @@
     </form>
 </fieldset>
 <br>
+<hr>
 <!-- Display Data -->
 {% for entry in data %}
-    <a href="{% url 'data-entry' entry.pk %}"><b>{{ entry.title }}</b></a>
+    <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}"><b>{{ entry.title }}</b></a>
     ${{ entry.price }}
     {% for tag in entry.tags.all %}
-        <em><a href="{% url 'data-tag' tag.id %}">{{ tag }}</em></a>
+        <em><a href="{% url 'data-tag' title=tag pk=tag.id %}">{{ tag }}</em></a>
     {% endfor %}
     <hr><br>
+{% empty %}
+You have no entries yet
 {% endfor %}
 
 <br>
+
 {% for tag, total in tagtotal.items %}
-    {{ tag }}: ${{ total }}<br>
+    <p>{{ tag }}: ${{ total }}</p>
+
 {% endfor %}
 
-<hr>Total: ${{ total.price__sum }}
+
+{% if tagtotal %}
+<hr>
+Total: ${{ total.price__sum }}
+{% endif %}
+
 
 {% endblock %}

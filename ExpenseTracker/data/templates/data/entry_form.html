@@ -1,6 +1,15 @@
 {% extends 'data/base.html' %}
 
 {% block content %}
+
+<b>Entry details:</b> {{ entry.title }}
+
+${{ entry.price }}
+{% for tag in entry.tags.all %}
+    <em>{{ tag }} </em>
+{% endfor %}
+<br><br>
+
 <form  method="POST">
      {% csrf_token %}
       <fieldset>
