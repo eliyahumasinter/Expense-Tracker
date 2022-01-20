@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
 from .models import Entry, EntryTag
-from .forms import AddEntryFormFunc, AddEntryTagForm, AddEntryForm
+from .forms import AddEntryFormFunc, UpdateEntryFormFunc, AddEntryTagForm, AddEntryForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, DeleteView, UpdateView
 from django.db.models import Sum
+import itertools
 # from django.http import HttpResponse
 
 
@@ -83,9 +84,12 @@ class DataUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         self.object = self.get_object()
+        entry = Entry.objects.filter(id=self.object.id).first()
+        tagids = entry.tags.values_list('id')
+        tagids = set(entry[0] for entry in tagids)
         context = super(DataUpdateView, self).get_context_data(**kwargs)
-        context['entry'] = Entry.objects.filter(id=self.object.id).first()
-        context['form'] = AddEntryFormFunc(self.request.user.id)
+        context['entry'] =  Entry.objects.filter(id=self.object.id).first()
+        context['form'] = UpdateEntryFormFunc(self.request.user.id, entry.title, entry.price, tagids)
         return context
 
     def test_func(self):

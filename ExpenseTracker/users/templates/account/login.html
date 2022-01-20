@@ -1,5 +1,5 @@
 {% extends "account/base.html" %}
-{% load tailwind_filters %}
+{% load crispy_forms_tags  %}
 {% load i18n %}
 {% load account socialaccount %}
 
@@ -7,19 +7,29 @@
 
 {% block content %}
 
-<h1 class="text-3xl font-bold">{% trans "Sign In" %}</h1>
-<br>
-<a href="{% provider_login_url "google" %}" class="bg-red-200 p-2 text-lg text-gray-500 font-bold rounded-full hover:bg-red-300 ">Login with Google</a>
-<br><br>
+<h1 class="text-3xl pb-3  font-bold">{% trans "Sign In" %}</h1>
+
 <form class="login" method="POST" action="{% url 'account_login' %}">
   {% csrf_token %}
-  {{ form|crispy }}
+  
+  
+  <div class="row pb-3">
+    <div class="col-sm-12 col-md-6 col-lg-5" style="width=500px!important">
+      {{ form.login|as_crispy_field }}
+    </div>
+    <div class="col-sm-12 col-md-6 col-lg-5">
+      {{ form.password|as_crispy_field }}
+    </div>
+  </div>
   {% if redirect_field_value %}
   <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
   {% endif %}
-
-  <button class="primaryAction px-4 rounded-lg bg-purple-800  text-gray-800 font-bold p-4 uppercase border-yellow-500 border-t border-b border-r" type="submit">{% trans "Sign In" %}</button><br>
-  <a class="button secondaryAction text-gray-800 muted hover:underline" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+  <button class="primaryAction px-4 rounded-lg bg-purple-700 hover:bg-purple-400 text-gray-800 font-bold p-3 my-1 uppercase border-yellow-500 border-t border-b border-r" type="submit">{% trans "Sign In" %}</button><br>
+  <a class="button secondaryAction text-gray-800 muted hover:underline" href="{% url 'account_reset_password' %}"><span class="text-gray-500  hover:text-gray-800">{% trans "Forgot Password?" %}</span></a>
 </form>
 
+<br>
+<h1 class="text-2xl  font-bold">OR</h1>
+<br>
+<a href="{% provider_login_url "google" %}" class="bg-red-200 p-2 text-lg text-gray-500 font-bold rounded-full hover:bg-red-300 ">Login with Google</a>
 {% endblock %}
