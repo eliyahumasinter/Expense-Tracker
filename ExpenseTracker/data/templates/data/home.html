@@ -1,6 +1,6 @@
 {% extends 'data/base.html' %}
 {% load tailwind_filters %}
-
+{% load humanize %}
 {% block content %}
 
 
@@ -61,7 +61,7 @@
             {% if tagtotal %}
                 <tr>
                     <td class="border border-gray-600 bg-gray-500">Total</td>
-                    <td class="border border-gray-600 bg-gray-500">${{ total.price__sum }}</td>
+                    <td class="border border-gray-600 bg-gray-500">${{ total.price__sum|floatformat:"2"|intcomma:False }}</td>
                 </tr>
             {% endif %}
           </tbody>
