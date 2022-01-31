@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import DataListView, DataDetailView, DataDeleteView, DataUpdateView, TagDetailView
+from .views import DataListView, DataDetailView, DataDeleteView, DataUpdateView, TagDetailView, ChartData
 
 from . import views
 
@@ -14,6 +14,9 @@ urlpatterns = [
     path('entry/<str:title>/<int:pk>/update',
          DataUpdateView.as_view(), name='data-update'),
 
-    path('tag/<str:title>/<int:pk>/', TagDetailView.as_view(), name='data-tag')
+    path('tag/<str:title>/<int:pk>/', TagDetailView.as_view(), name='data-tag'),
+    
+    path('charts/<str:timeperiod>/', views.charts),
+    path('charts/data/', ChartData.as_view())
 
 ]

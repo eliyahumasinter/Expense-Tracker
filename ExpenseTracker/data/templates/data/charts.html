@@ -1,0 +1,62 @@
+
+
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <h1>Hello world</h1>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js'></script>
+
+    <script>
+        $(document).ready(function(){
+            var endpoint = '/charts/data/'
+            var mydata = []
+            var mylabels = [];
+            $.ajax({
+                method: "GET",
+                url: endpoint,
+                success: function(data){
+                    console.log(data.mostfrequenttag)
+                    console.log("heythere")
+                    mylabels = data.mylabels
+                    mydata = data.myvalues
+                    console.log(data.mylables)
+                    console.log(data.myvalues)
+                    const ctx = document.getElementById('myChart').getContext('2d');
+                    const myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: mylabels,
+                            datasets: [{
+                                label: '# of Votes',
+                                data: mydata,
+                            }]
+                        }
+                    })
+                    
+                },
+                error: function(error_data){
+                    console.log("error")
+                    console.log(error_data)
+                }
+            })
+        })
+    </script>
+
+    <canvas id="myChart" width="400" height="400"></canvas>
+    {{ entriesfrompastmonth }}
+    {{ data }}
+</body>
+</html>

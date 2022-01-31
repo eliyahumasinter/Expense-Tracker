@@ -1,0 +1,89 @@
+
+.showlabel label{
+    display: block!important;
+}
+
+.profile-card{
+    background-color: lightpink;
+}
+.update-entry-card{
+    background-color: lightpink;
+}
+
+.update-entry-card a{
+    color:black;
+    text-decoration: none;
+}
+
+#tagid:hover{
+    background-color: darkgray;
+}
+
+.addentryform {
+    background-color:#03a9f4;
+    padding:1em;
+    border-radius: 2em;
+}
+
+.entry{
+    background-color:aqua;
+    border-radius: 25px;
+    overflow: hidden;
+}
+.entry a{
+    color:black;
+    text-decoration: none;
+}
+
+.entry a:hover{
+    color: lightslategray;
+}
+
+.requiredField {
+    display: none;
+}
+.form-check{
+    display: inline;  
+}
+.form-check .form-check-input {
+    display:none;
+}
+.form-check label {
+    font-style: italic;
+    margin-left: 0.25rem;
+    margin-bottom: 0.5rem;
+    float: center;
+    background-color: rgb(247,250,252);
+    text-transform: lowercase;
+    border-radius: 9999px;
+    padding-right: 0.5rem!important;
+    padding-left: 0.5rem!important;
+    vertical-align: middle!important;
+}
+
+#tagid {
+    font-style: italic;
+    margin-left: 0.25rem;
+    margin-bottom: 0.5rem;
+    float: center;
+    background-color: rgb(247,250,252);
+    text-transform: lowercase;
+    border-radius: 9999px;
+    padding-right: 0.5rem!important;
+    padding-left: 0.5rem!important;
+
+}
+
+.form-check input:checked ~ label {
+    background-color:rgb(140,140,140);
+  }
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+  }

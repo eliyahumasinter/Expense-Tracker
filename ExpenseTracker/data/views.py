@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render, redirect
 from .models import Entry, EntryTag
 from .forms import AddEntryFormFunc, UpdateEntryFormFunc, AddEntryTagForm, AddEntryForm
@@ -5,8 +6,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, DeleteView, UpdateView
 from django.db.models import Sum
 import itertools
-# from django.http import HttpResponse
-
+from django.http import JsonResponse
+import random
+from django.core import serializers
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 class DataListView(LoginRequiredMixin, ListView):  # home
     model = Entry
@@ -16,15 +20,15 @@ class DataListView(LoginRequiredMixin, ListView):  # home
     # paginate_by = 25
 
     def get_queryset(self):
-        return Entry.objects.filter(user=self.request.user.id)
+        return Entry.objects.filter(user=self.request.user.profile)
 
     def get_context_data(self, **kwargs):
         context = super(DataListView, self).get_context_data(**kwargs)
-        context['AddEntryForm'] = AddEntryFormFunc(self.request.user.id)
+        context['AddEntryForm'] = AddEntryFormFunc(self.request.user.profile)
         context['AddTagForm'] = AddEntryTagForm()
-        context['tagtotal'] = getTagTotal(userid=self.request.user.id)
+        context['tagtotal'] = getTagTotal(user=self.request.user.profile)
         context['total'] = Entry.objects.filter(
-            user=self.request.user.id).aggregate(Sum('price'))
+            user=self.request.user.profile).aggregate(Sum('price'))
         return context
 
     def post(self, request, *args, **kwargs):  # Post request
@@ -76,11 +80,11 @@ class DataDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 class DataUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Entry
 
-    fields = ['title', 'price', 'tags']
+    fields = ['title', 'price', 'currency', 'notes', 'tags']
     success_url = '/'
 
     def get_queryset(self):
-        return Entry.objects.filter(user=self.request.user.id)
+        return Entry.objects.filter(user=self.request.user.profile)
 
     def get_context_data(self, **kwargs):
         self.object = self.get_object()
@@ -89,7 +93,7 @@ class DataUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         tagids = set(entry[0] for entry in tagids)
         context = super(DataUpdateView, self).get_context_data(**kwargs)
         context['entry'] =  Entry.objects.filter(id=self.object.id).first()
-        context['form'] = UpdateEntryFormFunc(self.request.user.id, entry.title, entry.price, tagids)
+        context['form'] = UpdateEntryFormFunc(self.request.user.profile, entry.title, entry.price, tagids)
         return context
 
     def test_func(self):
@@ -123,14 +127,72 @@ class TagDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             return False
 
 
-def getTagTotal(userid, timeperiod="All"):
+def getTagTotal(user, timeperiod=None): #Implement the timeperiod
     tagtotal = {}  # tag:total_cost
-    tags = EntryTag.objects.filter(user=userid)
+    tags = EntryTag.objects.filter(user=user)
     for tag in tags:
         for i in tag.entry_set.all():
             try:
-                tagtotal[tag] += i.price
+                tagtotal[tag.tag][0] += i.price
+                tagtotal[tag.tag][1] += 1
             except:
-                tagtotal[tag] = i.price
+                tagtotal[tag.tag] = [i.price,1]
+    tagtotal = {k: v for k, v in sorted(tagtotal.items(), key=lambda item: item[1], reverse=True)} #sort by tag value
+    return (tagtotal) #{tag:[totalamountspent, frequency]}
 
-    return (tagtotal)
+def mostFrequentTag(taglist):
+	largest = 0
+	topkey = None
+	for key, val in taglist.items():
+		if val[1] > largest:
+			largest= val[1]
+			topkey = key
+	if topkey:
+		return (topkey, largest)
+	else:
+		return False #if no entries have been provided
+
+class ChartData(APIView):
+
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        """
+        Return a list of all users.
+        """
+        labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange']
+        myvalues = [random.randint(1,10) for i in range(6)]
+        data = {
+            "mylabels":labels,
+            "myvalues": myvalues
+        }
+        return Response(data)
+
+
+
+def charts(request, timeperiod):
+    print(timeperiod)
+    now = datetime.now()
+    thismonth = now.replace(day=1)
+    entriesfrompastmonth=request.user.profile.entry_set.filter(date_posted__range=[str(thismonth), str(now)])
+    totalspentpastmonth=entriesfrompastmonth.aggregate(Sum('price'))
+    entriesfrompastmonth = serializers.serialize('json', entriesfrompastmonth)
+    
+    tagtotals = getTagTotal(user=request.user.profile)
+    mostfrequenttag = mostFrequentTag(tagtotals)
+    data = {
+        "entriesfrompastmonth": entriesfrompastmonth,
+        "totalspentpastmonth": totalspentpastmonth,
+        "tagtotals":tagtotals,
+        "mostfrequenttag":mostfrequenttag
+    }
+
+    # For each tag, I want to be able to see how much was spent on that tag overtime, which months/weeks had the highest usage
+    # Rank each tag by most spent
+    # Rank each tag by frequency of use
+
+
+    return JsonResponse({"data":data})
+    #return render(request, "data/charts.html", context=context)
+

@@ -1,0 +1,53 @@
+{% extends "account/base.html" %}
+{% load crispy_forms_tags  %}
+{% load i18n %}
+{% load account socialaccount %}
+{% load static %}
+{% block head_title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'data/formtemplate.css' %}">
+
+
+<form class="login" method="POST" action="{% url 'login' %}">
+  {% csrf_token %}
+  <section class="login-block">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-12">
+                <form class="md-float-material form-material" action="#" method="POST">
+                    <div class="auth-box card">
+                        <div class="card-block">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h3 class="text-center heading">Sign in to Expense Tracker!</h3>
+                                </div>
+                            </div>
+                            <div class="form-group form-primary"> {{ form.username|as_crispy_field }}
+                            <div class="form-group form-primary"> {{ form.password|as_crispy_field }}
+                            {% if redirect_field_value %}
+                              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                            {% endif %}
+                            <div class="row">
+                                <div class="col-md-12"> <input type="submit" class="btn btn-primary btn-md btn-block waves-effect text-center m-b-20" name="submit" value="Login"> <!-- <button type="button" class="btn btn-primary btn-md btn-block waves-effect text-center m-b-20"><i class="fa fa-lock"></i> Signup Now </button> -->
+                                </div>
+                            </div>
+                            <div class="or-container">
+                                <div class="line-separator"></div>
+                                <div class="or-label">or</div>
+                                <div class="line-separator"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12"> <a class="btn btn-lg btn-google btn-block text-uppercase btn-outline" href="{% provider_login_url "google" %}"><img src="https://img.icons8.com/color/16/000000/google-logo.png"> Login Using Google</a> </div>
+                            </div> <br>
+                            <p class="text-inverse text-center">Don't have an account yet? <a href="{% url 'register' %}" data-abc="true">Signup</a></p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+  </section>
+</form>
+
+{% endblock %}

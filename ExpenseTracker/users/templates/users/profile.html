@@ -1,5 +1,186 @@
 {% extends 'data/base.html' %}
-
+{% load humanize %}
 {% block content %}
-<h1>{{ user.username }}</h1>
+<h2>Welcome, {% if user.first_name %} 
+                {{user.first_name}} 
+             {% else %}
+                 {{user.username}}
+            {% endif %}!</h2>
+
+<div class="row justify-content-between">
+    <div class="card profile-card">
+      <div class="card-body">
+        <h4 class="capitalize card-title">Account Info</h4>
+        <p class="card-text">
+          Total Spent: ${{ totalspent.price__sum|floatformat:"2"|intcomma:False }}<br>
+          Total Entries: {{ user.profile.entry_set.all|length }}<br>
+          Total Spent Last Month: ${{ totalspentpastmonth.price__sum|floatformat:"2"|intcomma:False }}<br>
+          Entries this month: {{ entriesfrompastmonth|length }}<br>
+        </p>
+      </div>
+    </div>
+    <div class="card profile-card">
+      <div class="card-body">
+        <h4 class="capitalize card-title">{{ user.username }}</h4>
+        <h6 class="card-subtitle mb-2 text-muted">{{ user.email }}</h6>
+        <p class="card-text">
+          Default currency {{ user.profile.default_currency }}
+        </p>
+        <button data-toggle="modal" data-target"" class="card-link btn btn-primary align-middle">Reset Password</a>
+        <button type="button" class="card-link btn btn-primary align-middle" data-toggle="modal" data-target="#currencyModal">Change Currency</a>
+      </div>
+    </div>
+
+</div>
+
+
+<!-- Change Default Currency Modal -->
+<div class="modal fade" id="currencyModal" tabindex="-1" role="dialog" aria-labelledby="currencyModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="currencyModalLabel">Change the Default Currency</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        You can change the default currency for each new entry. Feel free to add entries with different currencies 
+        for each entry. The website will take care of the conversions. <br>
+        Note: All graphs and data will be shown in USD after taking into account any necassary conversions.
+        <form method="POST">
+          {% csrf_token %}
+          {{ change_currency_form }}
+          <input type="submit" value="Update" class="btn btn-primary">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        var endpoint = '/charts/data/'
+        var mydata1 = []
+        var mydata2 = []
+        var mylabels = [];
+
+        $.ajax({
+            method: "GET",
+            url: endpoint,
+            success: function(data){
+                for (const [key, value] of Object.entries(data.data.tagtotals)) {
+                  mylabels.push(key);
+                  mydata1.push(value[0]);
+                  mydata2.push(value[1]);
+                }
+                drawBarChart("data1",mylabels,mydata1, "Cost Per Tag");
+                drawPieChart("data2",mylabels,mydata2, "Tag frequency");
+                drawBarChart("data3", ["Number of Tags","Number of Entries","Entries From Past Month"],[{{ user.profile.entrytag_set.all|length }},{{ user.profile.entry_set.all|length }},{{ entriesfrompastmonth|length }}], "Account Info");
+
+            },
+            error: function(error_data){
+                console.log("error")
+                console.log(error_data)
+            }
+        })
+    })
+
+    function drawBarChart(id_tag, labels, data, label){
+      const ctx = document.getElementById(id_tag).getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: [
+                      'rgba(255, 99, 132, 0.2)',
+                      'rgba(54, 162, 235, 0.2)',
+                      'rgba(255, 206, 86, 0.2)',
+                      'rgba(75, 192, 192, 0.2)',
+                      'rgba(153, 102, 255, 0.2)',
+                      'rgba(255, 159, 64, 0.2)'
+                  ],
+                  borderColor: [
+                      'rgba(255, 99, 132, 1)',
+                      'rgba(54, 162, 235, 1)',
+                      'rgba(255, 206, 86, 1)',
+                      'rgba(75, 192, 192, 1)',
+                      'rgba(153, 102, 255, 1)',
+                      'rgba(255, 159, 64, 1)'
+                  ],
+                  borderWidth: 1
+                }]
+            },
+            options: {
+              scale: {
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+            
+        })
+        
+    }
+
+    function drawPieChart(id_tag, labels, data, label){
+      const ctx = document.getElementById(id_tag).getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(255, 0, 195, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(159, 255, 102, 0.2)',
+                    'rgba(152, 104, 23, 0.2)',
+                    'rgba(255, 159, 64, 0.2)',
+                    ],
+                    
+                }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'top',
+                },
+                title: {
+                  display: true,
+                  text: 'Tag Frequency'
+                }
+              }
+            }
+            
+        })
+        
+    }
+
+</script>
+<div class="row">
+  <div class="col-md-6 col-lg-4 p-2 my-5">
+    <canvas id="data1" width="400" height="400"></canvas>
+  </div>
+  <div class="col-md-6 col-lg-4 p-2 mb-5">
+    <canvas id="data2" width="400" height="400"></canvas>
+  </div>
+  <div class="col-md-6 col-lg-4 p-2 mb-5">
+    <canvas id="data3" width="400" height="400"></canvas>
+  </div>
+</div>
+ <br>
+
 {% endblock content %}

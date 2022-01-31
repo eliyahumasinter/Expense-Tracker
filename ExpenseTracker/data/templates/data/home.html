@@ -1,82 +1,84 @@
 {% extends 'data/base.html' %}
 {% load crispy_forms_tags  %}
 {% load humanize %}
+{% load static %}
 {% block content %}
 
 
 
-
-<div class="container px-0 mx-auto sm:px-10 lg:px-20 ">
-    <div class="grid grid-flow-row-dense justify-items-center lg:grid-cols-3  ">
-        <div class="col-span-2  bg-red-200 rounded p-1 mb-4">
-            <form  method="POST">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-6">
-                        {{ AddEntryForm.title|as_crispy_field }}
-                    </div>
-                    <div class="col-6">
-                        {{ AddEntryForm.price|as_crispy_field }}
-                    </div>
-                </div>
-                {{ AddEntryForm.tags|as_crispy_field }}
-                <button type="submit" class="float-right px-8 rounded-lg bg-purple-700 hover:bg-purple-600  text-gray-800 font-bold p-3 uppercase border-yellow-500 border-t border-b border-r">Add Entry</button>
-            </form>
-        </div>
-        <div class="col-span-1">
-            <!-- Add a tag form -->
-            <form  method="POST" class="float-right">
-                {% csrf_token %}
-                <input class="rounded-l-lg p-3 border-t mr-0 border-b border-l text-gray-800 bg-gray-300
-                    border-gray-200 bg-gray-100" type="text" name="tag" id="id_tag" placeholder="some tag" required/>
-                <button class="px-8 rounded-r-lg bg-purple-700 hover:bg-purple-600  text-gray-800 font-bold p-3 uppercase border-yellow-500 border-t border-b border-r">Add Tag</button>
-            </form>
-        </div>
-</div>
-
-
-<div class="container px-0 mx-auto sm:px-10 lg:px-20 pt-2">
-    <!-- Display Data -->
-    {% for entry in data %}
-        <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}">
-            <div class="m-5 py-3 px-3 bg-red-200 rounded-full hover:bg-red-300">
-                <span class="font-bold capitalize text-black">{{ entry.title }}</span>
-                <span class="pl-4">${{ entry.price }}</span>
-                {% for tag in entry.tags.all %}
-                    <a href="{% url 'data-tag' title=tag pk=tag.id %}"
-                    class="italic text-gray-800 lowercase bg-gray-100 hover:bg-gray-300 px-2 rounded-full float-right ml-1">{{ tag }}</a>
-                {% endfor %}
+<div class="addentryform">
+    <form  method="POST">
+        {% csrf_token %}
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-md-2">
+                <h3 class="text-center">Add Entry</h3>
             </div>
-        </a>
-    {% empty %}
-        You have no entries yet
-    {% endfor %}
-
-    <!-- table -->
-    <div class="w-2/3 mx-auto py-5">
-        <table class="border-collapse border border-gray-600 bg-gray-400" style="width: 100%;">
-          <thead>
-            <tr>
-              <th>Tag</th>
-              <th>Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for tag, total in tagtotal.items %}
-            <tr>
-                <td class="border border-gray-600 pl-2">{{ tag }}</td>
-                <td class="border border-gray-600 pl-2">${{ total }}</td>
-            </tr>
-            {% endfor %}
-            {% if tagtotal %}
-                <tr>
-                    <td class="border border-gray-600 bg-gray-500">Total</td>
-                    <td class="border border-gray-600 bg-gray-500">${{ total.price__sum|floatformat:"2"|intcomma:False }}</td>
-                </tr>
-            {% endif %}
-          </tbody>
-        </table>
+            <div class="col-10 col-md-5">
+                {{ AddEntryForm.title|as_crispy_field }}
+            </div>
+            <div class="col-10 col-md-5">
+                {{ AddEntryForm.price|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div class="row d-flex justify-content-between pt-3">
+            <div class="col-md-9">
+                {{ AddEntryForm.tags|as_crispy_field }}
+            </div>
+            <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-primary" style="float:right;">Add Entry</button>
+            </div>
+        </div>
+    </form>
+    <div class="form-group pl-4">
+        <form  method="POST" class="">
+            {% csrf_token %}
+            <input class="d-inline form-control" type="text" name="tag" style="width:auto;" id="id_tag" placeholder="some tag" required/>
+            <button class="d-inline btn btn-secondary" style="vertical-align:baseline;">Add Tag</button>
+        </form>
     </div>
-
 </div>
+
+
+{% for entry in data %}
+    <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}">
+        <div class="entry py-3 px-3 my-3">
+            <span class="text-capitalize font-weight-bold align-middle">{{ entry.title }}</span>
+            <span class="pl-2 align-middle">${{ entry.price }}</span>
+            {% for tag in entry.tags.all %}
+                <a href="{% url 'data-tag' title=tag pk=tag.id %}"
+                class="float-right ml-1" id="tagid">{{ tag }}</a>
+            {% endfor %}
+        </div>
+    </a>
+{% empty %}
+    <div class="m-4">You have no entries yet. Add an entry to begin!</div>
+{% endfor %}
+
+<!-- table -->
+<div class="w-2/3 mx-auto py-5">
+    <table class="border-collapse border border-gray-600 bg-gray-400" style="width: 100%;">
+        <thead>
+        <tr>
+            <th>Tag</th>
+            <th>Cost</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for tag, total in tagtotal.items %}
+        <tr>
+            <td class="border border-gray-600 pl-2">{{ tag }}</td>
+            <td class="border border-gray-600 pl-2">${{ total.0 }}</td>
+        </tr>
+        {% endfor %}
+        {% if tagtotal %}
+            <tr style="font-weight:bold;">
+                <td class="border border-gray-600 bg-gray-500">Total Spent</td>
+                <td class="border border-gray-600 bg-gray-500">${{ total.price__sum|floatformat:"2"|intcomma:False }}</td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
 {% endblock %}
