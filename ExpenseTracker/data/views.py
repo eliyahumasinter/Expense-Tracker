@@ -7,10 +7,12 @@ from django.views.generic import ListView, DetailView, DeleteView, UpdateView
 from django.db.models import Sum
 import itertools
 from django.http import JsonResponse
-import random
+import random, json
 from django.core import serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from ExpenseTracker.secrets import *
+import requests
 
 class DataListView(LoginRequiredMixin, ListView):  # home
     model = Entry
@@ -27,8 +29,7 @@ class DataListView(LoginRequiredMixin, ListView):  # home
         context['AddEntryForm'] = AddEntryFormFunc(self.request.user.profile)
         context['AddTagForm'] = AddEntryTagForm()
         context['tagtotal'] = getTagTotal(user=self.request.user.profile)
-        context['total'] = Entry.objects.filter(
-            user=self.request.user.profile).aggregate(Sum('price'))
+        context['total'] = getTotal(user=self.request.user.profile)
         return context
 
     def post(self, request, *args, **kwargs):  # Post request
@@ -38,8 +39,10 @@ class DataListView(LoginRequiredMixin, ListView):  # home
             title = data['title']
             price = data['price']
             tags = data['tags']
+            currency = request.user.profile.default_currency
+            notes = "You may add notes about this entry"
             user = request.user.profile
-            entry = Entry(title=title, price=price, user=user)
+            entry = Entry(title=title, price=price, user=user, currency=currency, notes=notes)
             entry.save()
             entry.tags.set(tags)
 
@@ -93,7 +96,7 @@ class DataUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         tagids = set(entry[0] for entry in tagids)
         context = super(DataUpdateView, self).get_context_data(**kwargs)
         context['entry'] =  Entry.objects.filter(id=self.object.id).first()
-        context['form'] = UpdateEntryFormFunc(self.request.user.profile, entry.title, entry.price, tagids)
+        context['form'] = UpdateEntryFormFunc(self.request.user.profile, entry.title, entry.price, tagids, entry.currency)
         return context
 
     def test_func(self):
@@ -115,9 +118,15 @@ class TagDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context = super(TagDetailView, self).get_context_data(*args, **kwargs)
         context['total'] = 0
         for entry in (context['object'].entry_set.all()):
-            context['total'] += entry.price
+            if entry.currency == "USD":
+                context['total'] += entry.price
+            else:
+                context['total'] +=  (1/currency_data[entry.currency])*entry.price
         context['total'] = round(context['total'], 2)
+        context['chartids'] = json.loads(tagdetaildata(self.request, context['object'].pk).content)['entriesovertime']       
+        
         return context
+
 
     def test_func(self):
         entry = self.get_object()
@@ -133,13 +142,33 @@ def getTagTotal(user, timeperiod=None): #Implement the timeperiod
     for tag in tags:
         for i in tag.entry_set.all():
             try:
-                tagtotal[tag.tag][0] += i.price
+                if i.currency == "USD":
+                    tagtotal[tag.tag][0] += i.price
+                else:
+                    #url = f"https://freecurrencyapi.net/api/v2/latest?apikey={curencyapikey}"
+                    #response = json.loads(requests.get(url).content)['data']
+                    conversion = round((1/currency_data[i.currency])*i.price,2)
+                    tagtotal[tag.tag][0] += conversion
                 tagtotal[tag.tag][1] += 1
             except:
-                tagtotal[tag.tag] = [i.price,1]
+                if i.currency == "USD":
+                    tagtotal[tag.tag] = [i.price,1]
+                else:
+                    conversion = round((1/currency_data[i.currency])*i.price,2)
+                    tagtotal[tag.tag] = [conversion,1] 
     tagtotal = {k: v for k, v in sorted(tagtotal.items(), key=lambda item: item[1], reverse=True)} #sort by tag value
     return (tagtotal) #{tag:[totalamountspent, frequency]}
-
+                    
+def getTotal(user, timeperiod=None):
+    total = 0
+    entries = Entry.objects.filter(user=user)
+    for entry in entries:
+        if entry.currency == "USD":
+            total += entry.price
+        else:
+            total += round((1/currency_data[entry.currency])*entry.price,2)
+    return total
+                
 def mostFrequentTag(taglist):
 	largest = 0
 	topkey = None
@@ -169,10 +198,7 @@ class ChartData(APIView):
         }
         return Response(data)
 
-
-
 def charts(request, timeperiod):
-    print(timeperiod)
     now = datetime.now()
     thismonth = now.replace(day=1)
     entriesfrompastmonth=request.user.profile.entry_set.filter(date_posted__range=[str(thismonth), str(now)])
@@ -192,7 +218,30 @@ def charts(request, timeperiod):
     # Rank each tag by most spent
     # Rank each tag by frequency of use
 
-
     return JsonResponse({"data":data})
     #return render(request, "data/charts.html", context=context)
 
+def tagdetaildata(request, pk):
+    tag = request.user.profile.entrytag_set.filter(pk=pk).first()
+    entriesPerYear = {}
+    
+    for entry in tag.entry_set.all().order_by("date_posted"):
+        print(entry.date_posted.year, entry.date_posted.month)
+        if entry.date_posted.year not in entriesPerYear:
+            entriesPerYear[entry.date_posted.year]={'total':1}
+        else:
+            entriesPerYear[entry.date_posted.year]['total']+=1
+            
+        if entry.date_posted.strftime("%b") not in entriesPerYear[entry.date_posted.year]:
+            entriesPerYear[entry.date_posted.year][entry.date_posted.strftime("%b")] = 1
+        else:
+             entriesPerYear[entry.date_posted.year][entry.date_posted.strftime("%b")] += 1
+
+    totalEntries = len(tag.entry_set.all())
+    
+    data = {
+        "totalentries": totalEntries,
+        "entriesovertime": entriesPerYear 
+    }
+    print(data)
+    return JsonResponse(data)

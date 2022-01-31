@@ -1,7 +1,17 @@
 {% extends 'data/base.html' %}
 
 {% block content %}
-<h1>Tag Detail for {{ tag }}</h1>
+<h2>Tag Details for {{ tag }}</h2>
+<div class="row">
+    <div class="col-md-6 col-lg-4 p-2 my-5">
+        <canvas id="data1" width="400" height="400"></canvas>
+    </div>
+    {% for id in chartids %}
+    <div class="col-md-6 col-lg-4 p-2 my-5">
+        <canvas id="{{ id }}" width="400" height="400"></canvas>
+    </div>
+    {% endfor %}
+</div>
 
 {% for entry in tag.entry_set.all %}
     <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}"><b>{{ entry.title }}</b></a>
@@ -12,6 +22,130 @@
     <hr><br>
 {% endfor %}
 
-<h4>Total: {{ total }}</h4>
+<h4>Total: ${{ total }}</h4>
+{{ timeperioddata }}
+
+
+
+<script>
+    $(document).ready(function(){
+        var endpoint = '/charts/data/{{ tag.id }}'
+        var data1 = [];
+        var labels = [];
+        
+
+        $.ajax({
+            method: "GET",
+            url: endpoint,
+            success: function(data){
+                for (const [key, value] of Object.entries(data.entriesovertime)) {
+                  labels.push(key);
+                  data1.push(value.total);
+                }
+                if (Object.keys(data.entriesovertime).length > 1) {
+                    drawBarChart("data1",labels,data1, "Entries Per Year");
+                }
+
+                for (const [key, value] of Object.entries(data.entriesovertime)) {
+                    var x = [];
+                    var y = [];
+                    for (const [key1, value1] of Object.entries(value)){
+                        if (key1 != "total"){
+                            x.push(key1);
+                            y.push(value1);
+                        }
+
+                    }
+                    if (x.length > 1){
+                        drawLineChart(key,x,y, "Entries Per Month for "+key);
+                    }
+                    else{
+                        drawBarChart(key,x,y, "Entries Per Month for "+key);
+                    }
+                  }
+               
+            },
+            error: function(error_data){
+                console.log("error")
+                console.log(error_data)
+            }
+        })
+    })
+
+    function drawBarChart(id_tag, labels, data, label){
+      const ctx = document.getElementById(id_tag).getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: [
+                      'rgba(255, 99, 132, 0.2)',
+                      'rgba(54, 162, 235, 0.2)',
+                      'rgba(255, 206, 86, 0.2)',
+                      'rgba(75, 192, 192, 0.2)',
+                      'rgba(153, 102, 255, 0.2)',
+                      'rgba(255, 159, 64, 0.2)'
+                  ],
+                  borderColor: [
+                      'rgba(255, 99, 132, 1)',
+                      'rgba(54, 162, 235, 1)',
+                      'rgba(255, 206, 86, 1)',
+                      'rgba(75, 192, 192, 1)',
+                      'rgba(153, 102, 255, 1)',
+                      'rgba(255, 159, 64, 1)'
+                  ],
+                  borderWidth: 1
+                }]
+            },
+            options: {
+              scale: {
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+            
+        })
+        
+    }
+
+    function drawLineChart(id_tag, labels, data, label){
+        const ctx = document.getElementById(id_tag).getContext('2d');
+          const myChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                  labels: labels,
+                  datasets: [{
+                      label: label,
+                      data: data,
+                      borderColor: 'rgb(75, 192, 192)',
+                      tension: 0.1,
+                      fill: true,
+                  }]
+              },
+              options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                scale: {
+                  ticks: {
+                    precision: 0
+                  }
+                }
+                
+              }
+          })    
+      }
+
+
+</script>
+<br>
+
+
 
 {% endblock %}

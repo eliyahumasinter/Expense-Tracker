@@ -44,7 +44,9 @@
     <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}">
         <div class="entry py-3 px-3 my-3">
             <span class="text-capitalize font-weight-bold align-middle">{{ entry.title }}</span>
-            <span class="pl-2 align-middle">${{ entry.price }}</span>
+            <span class="pl-2 align-middle">{% if entry.currency == "USD" %}${{ entry.price }}
+                {% else %}{{ entry.price }} {{entry.currency }}
+                {% endif %}</span>
             {% for tag in entry.tags.all %}
                 <a href="{% url 'data-tag' title=tag pk=tag.id %}"
                 class="float-right ml-1" id="tagid">{{ tag }}</a>
@@ -67,14 +69,16 @@
         <tbody>
         {% for tag, total in tagtotal.items %}
         <tr>
-            <td class="border border-gray-600 pl-2">{{ tag }}</td>
-            <td class="border border-gray-600 pl-2">${{ total.0 }}</td>
+            {% if tag != "totalSumOfTags" %}
+                <td class="border border-gray-600 pl-2">{{ tag }}</td>
+                <td class="border border-gray-600 pl-2">${{ total.0|floatformat:"2"|intcomma:False }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
-        {% if tagtotal %}
+        {% if total %}
             <tr style="font-weight:bold;">
                 <td class="border border-gray-600 bg-gray-500">Total Spent</td>
-                <td class="border border-gray-600 bg-gray-500">${{ total.price__sum|floatformat:"2"|intcomma:False }}</td>
+                <td class="border border-gray-600 bg-gray-500">${{ total|floatformat:"2"|intcomma:False }}</td>
             </tr>
         {% endif %}
         </tbody>

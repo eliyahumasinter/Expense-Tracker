@@ -17,6 +17,6 @@ urlpatterns = [
     path('tag/<str:title>/<int:pk>/', TagDetailView.as_view(), name='data-tag'),
     
     path('charts/<str:timeperiod>/', views.charts),
-    path('charts/data/', ChartData.as_view())
+    path('charts/data/<int:pk>/',views.tagdetaildata)
 
 ]

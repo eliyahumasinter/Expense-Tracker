@@ -35,7 +35,7 @@ class AddEntryForm(forms.ModelForm):
         model = Entry
         fields = ['title', 'price', 'tags']
 
-def UpdateEntryFormFunc(user, entrytitle, entryprice, tagids):
+def UpdateEntryFormFunc(user, entrytitle, entryprice, tagids, entrycurrency):
     class UpdateEntryForm(forms.ModelForm):
         Currencies= [
         ('ILS', 'ILS'),
@@ -47,7 +47,7 @@ def UpdateEntryFormFunc(user, entrytitle, entryprice, tagids):
             widget=forms.CheckboxSelectMultiple,
             required=False,
             initial=tagids)
-        currency = forms.CharField(label='Choose a currency', widget=forms.Select(choices=Currencies))
+        currency = forms.CharField(label='Currency', widget=forms.Select(choices=Currencies),initial=entrycurrency)
         notes = forms.CharField(widget=forms.Textarea(attrs={"ID":"entrynotes"}))
         class Meta:
             model = Entry
