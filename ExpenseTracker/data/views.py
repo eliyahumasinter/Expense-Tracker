@@ -1,5 +1,7 @@
 from datetime import datetime
 from django.shortcuts import render, redirect
+
+from users.models import Profile
 from .models import Entry, EntryTag
 from .forms import AddEntryFormFunc, UpdateEntryFormFunc, AddEntryTagForm, AddEntryForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -118,13 +120,9 @@ class TagDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context = super(TagDetailView, self).get_context_data(*args, **kwargs)
         context['total'] = 0
         for entry in (context['object'].entry_set.all()):
-            if entry.currency == "USD":
-                context['total'] += entry.price
-            else:
-                context['total'] +=  (1/currency_data[entry.currency])*entry.price
+            context['total'] += convertCurrency(entry.price, entry.currency)
         context['total'] = round(context['total'], 2)
         context['chartids'] = json.loads(tagdetaildata(self.request, context['object'].pk).content)['entriesovertime']       
-        
         return context
 
 
@@ -142,20 +140,11 @@ def getTagTotal(user, timeperiod=None): #Implement the timeperiod
     for tag in tags:
         for i in tag.entry_set.all():
             try:
-                if i.currency == "USD":
-                    tagtotal[tag.tag][0] += i.price
-                else:
-                    #url = f"https://freecurrencyapi.net/api/v2/latest?apikey={curencyapikey}"
-                    #response = json.loads(requests.get(url).content)['data']
-                    conversion = round((1/currency_data[i.currency])*i.price,2)
-                    tagtotal[tag.tag][0] += conversion
+                tagtotal[tag.tag][0] += convertCurrency(i.price, i.currency)
                 tagtotal[tag.tag][1] += 1
             except:
-                if i.currency == "USD":
-                    tagtotal[tag.tag] = [i.price,1]
-                else:
-                    conversion = round((1/currency_data[i.currency])*i.price,2)
-                    tagtotal[tag.tag] = [conversion,1] 
+                tagtotal[tag.tag] = [convertCurrency(i.price, i.currency),1]
+
     tagtotal = {k: v for k, v in sorted(tagtotal.items(), key=lambda item: item[1], reverse=True)} #sort by tag value
     return (tagtotal) #{tag:[totalamountspent, frequency]}
                     
@@ -163,10 +152,7 @@ def getTotal(user, timeperiod=None):
     total = 0
     entries = Entry.objects.filter(user=user)
     for entry in entries:
-        if entry.currency == "USD":
-            total += entry.price
-        else:
-            total += round((1/currency_data[entry.currency])*entry.price,2)
+        total += convertCurrency(entry.price, entry.currency)
     return total
                 
 def mostFrequentTag(taglist):
@@ -197,6 +183,8 @@ class ChartData(APIView):
             "myvalues": myvalues
         }
         return Response(data)
+    
+
 
 def charts(request, timeperiod):
     now = datetime.now()
@@ -223,10 +211,9 @@ def charts(request, timeperiod):
 
 def tagdetaildata(request, pk):
     tag = request.user.profile.entrytag_set.filter(pk=pk).first()
+    totalEntries = len(tag.entry_set.all())
     entriesPerYear = {}
-    
     for entry in tag.entry_set.all().order_by("date_posted"):
-        print(entry.date_posted.year, entry.date_posted.month)
         if entry.date_posted.year not in entriesPerYear:
             entriesPerYear[entry.date_posted.year]={'total':1}
         else:
@@ -237,11 +224,35 @@ def tagdetaildata(request, pk):
         else:
              entriesPerYear[entry.date_posted.year][entry.date_posted.strftime("%b")] += 1
 
-    totalEntries = len(tag.entry_set.all())
-    
+    year = datetime.now().year
+    months = {}
+    costOfEntries = {}
+    for entry in tag.entry_set.all().order_by("date_posted"):
+        if entry.date_posted.strftime("%b %d, %Y") not in costOfEntries:
+            costOfEntries[entry.date_posted.strftime("%b %d, %Y")] = convertCurrency(entry.price, entry.currency)
+            months[entry.date_posted.strftime("%b %Y")] = entry.price
+        else:
+            costOfEntries[entry.date_posted.strftime("%b %d, %Y")] += convertCurrency(entry.price, entry.currency)
+            months[entry.date_posted.strftime("%b %Y")] += entry.price
+            
+   
     data = {
         "totalentries": totalEntries,
-        "entriesovertime": entriesPerYear 
+        "entriesovertime": entriesPerYear ,
+        "costofentries": costOfEntries,
+        "months": months
     }
-    print(data)
+
     return JsonResponse(data)
+
+
+
+def convertCurrency(price, currency):
+    #url = f"https://freecurrencyapi.net/api/v2/latest?apikey={curencyapikey}"
+    #response = json.loads(requests.get(url).content)['data']
+
+    if currency == "USD":
+        return price
+    else:
+        return round((1/currency_data[currency])*price, 2)
+        

@@ -48,7 +48,18 @@
         {% endif %}
       </div>
     </nav>
-    
+    <br>
+
+    {% if messages %}
+    <div>
+      <strong>Messages:</strong>
+      <ul>
+        {% for message in messages %}
+        <li>{{message}}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
     
     <!--    {% if user.first_name %}
       <span class="text-gray-700 font-semibold content-center">Welcome, {{ user.first_name }}</span>

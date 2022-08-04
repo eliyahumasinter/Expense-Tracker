@@ -4,26 +4,37 @@
 <h2>Tag Details for {{ tag }}</h2>
 <div class="row">
     <div class="col-md-6 col-lg-4 p-2 my-5">
-        <canvas id="data1" width="400" height="400"></canvas>
+        <canvas id="costpertime" width="400" height="400"></canvas>
     </div>
+    <div class="col-md-6 col-lg-4 p-2 my-5">
+        <canvas id="costpermonth" width="400" height="400"></canvas>
+    </div>
+    
+    {% comment %} Years {% endcomment %}
     {% for id in chartids %}
     <div class="col-md-6 col-lg-4 p-2 my-5">
         <canvas id="{{ id }}" width="400" height="400"></canvas>
     </div>
     {% endfor %}
+
+    {% comment %} entries per year {% endcomment %}
+    <div class="col-md-6 col-lg-4 p-2 my-5">
+        <canvas id="data1" width="400" height="400"></canvas>
+    </div>
 </div>
 
-{% for entry in tag.entry_set.all %}
+<br>
+{% for entry in tag.entry_set.all|dictsortreversed:"date_posted" %}
     <a href="{% url 'data-entry' title=entry.title pk=entry.pk %}"><b>{{ entry.title }}</b></a>
     ${{ entry.price }}
     {% for tag in entry.tags.all %}
         <em><a href="{% url 'data-tag' title=tag pk=tag.id %}">{{ tag }}</em></a>
     {% endfor %}
+    {{ entry.date_posted }}
     <hr><br>
 {% endfor %}
 
 <h4>Total: ${{ total }}</h4>
-{{ timeperioddata }}
 
 
 
@@ -43,9 +54,15 @@
                   data1.push(value.total);
                 }
                 if (Object.keys(data.entriesovertime).length > 1) {
-                    drawBarChart("data1",labels,data1, "Entries Per Year");
+                    drawBarChart("data1",labels,data1, "frequency","Entries Per Year");
                 }
-
+                drawLineChart("costpertime",Object.keys(data.costofentries),
+                                          Object.values(data.costofentries), "$",
+                                          "Money spent over time");
+                drawBarChart("costpermonth",Object.keys(data.months),
+                                          Object.values(data.months), "$",
+                                          "Money spent per month");
+                
                 for (const [key, value] of Object.entries(data.entriesovertime)) {
                     var x = [];
                     var y = [];
@@ -57,10 +74,10 @@
 
                     }
                     if (x.length > 1){
-                        drawLineChart(key,x,y, "Entries Per Month for "+key);
+                        drawLineChart(key,x,y, "frequency", "Entry Frequency Per Month for "+key);
                     }
                     else{
-                        drawBarChart(key,x,y, "Entries Per Month for "+key);
+                        drawBarChart(key,x,y, "frequency", "Entry Freqeuncy Per Month for "+key);
                     }
                   }
                
@@ -72,7 +89,7 @@
         })
     })
 
-    function drawBarChart(id_tag, labels, data, label){
+    function drawBarChart(id_tag, labels, data, label, title){
       const ctx = document.getElementById(id_tag).getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'bar',
@@ -82,22 +99,24 @@
                     label: label,
                     data: data,
                     backgroundColor: [
-                      'rgba(255, 99, 132, 0.2)',
-                      'rgba(54, 162, 235, 0.2)',
-                      'rgba(255, 206, 86, 0.2)',
-                      'rgba(75, 192, 192, 0.2)',
-                      'rgba(153, 102, 255, 0.2)',
-                      'rgba(255, 159, 64, 0.2)'
-                  ],
-                  borderColor: [
-                      'rgba(255, 99, 132, 1)',
-                      'rgba(54, 162, 235, 1)',
-                      'rgba(255, 206, 86, 1)',
-                      'rgba(75, 192, 192, 1)',
-                      'rgba(153, 102, 255, 1)',
-                      'rgba(255, 159, 64, 1)'
-                  ],
-                  borderWidth: 1
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(255, 159, 64, 0.2)',
+                        'rgba(255, 205, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(201, 203, 207, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 159, 64)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(54, 162, 235)',
+                        'rgb(153, 102, 255)',
+                        'rgb(201, 203, 207)'
+                    ],
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -105,14 +124,21 @@
                 ticks: {
                   precision: 0
                 }
-              }
+              },
+              plugins: {
+                title: {
+                    display: true,
+                    text: title
+                }
             }
+            }
+            
             
         })
         
     }
 
-    function drawLineChart(id_tag, labels, data, label){
+    function drawLineChart(id_tag, labels, data, label, title){
         const ctx = document.getElementById(id_tag).getContext('2d');
           const myChart = new Chart(ctx, {
               type: 'line',
@@ -128,6 +154,12 @@
               },
               options: {
                 scales: {
+                    xAxes: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 7
+                        }
+                    },
                     y: {
                         beginAtZero: true
                     }
@@ -136,6 +168,12 @@
                   ticks: {
                     precision: 0
                   }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: title
+                    }
                 }
                 
               }

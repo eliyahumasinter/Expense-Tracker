@@ -77,9 +77,9 @@
                   mydata1.push(value[0]);
                   mydata2.push(value[1]);
                 }
-                drawBarChart("data1",mylabels,mydata1, "Cost Per Tag");
-                drawPieChart("data2",mylabels,mydata2, "Tag frequency");
-                drawBarChart("data3", ["Number of Tags","Number of Entries","Entries From Past Month"],[{{ user.profile.entrytag_set.all|length }},{{ user.profile.entry_set.all|length }},{{ entriesfrompastmonth|length }}], "Account Info");
+                drawBarChart("data1",mylabels,mydata1, "$", "Amount Spent Per Tag");
+                drawPieChart("data2",mylabels,mydata2, 'frequency',"Tag Frequency");
+                drawBarChart("data3", ["Number of Tags","Number of Entries","Entries From Past Month"],[{{ user.profile.entrytag_set.all|length }},{{ user.profile.entry_set.all|length }},{{ entriesfrompastmonth|length }}], "frequency","Account Info");
 
             },
             error: function(error_data){
@@ -89,7 +89,7 @@
         })
     })
 
-    function drawBarChart(id_tag, labels, data, label){
+    function drawBarChart(id_tag, labels, data, label, title){
       const ctx = document.getElementById(id_tag).getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'bar',
@@ -99,21 +99,23 @@
                     label: label,
                     data: data,
                     backgroundColor: [
-                      'rgba(255, 99, 132, 0.2)',
-                      'rgba(54, 162, 235, 0.2)',
-                      'rgba(255, 206, 86, 0.2)',
-                      'rgba(75, 192, 192, 0.2)',
-                      'rgba(153, 102, 255, 0.2)',
-                      'rgba(255, 159, 64, 0.2)'
-                  ],
-                  borderColor: [
-                      'rgba(255, 99, 132, 1)',
-                      'rgba(54, 162, 235, 1)',
-                      'rgba(255, 206, 86, 1)',
-                      'rgba(75, 192, 192, 1)',
-                      'rgba(153, 102, 255, 1)',
-                      'rgba(255, 159, 64, 1)'
-                  ],
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(255, 159, 64, 0.2)',
+                        'rgba(255, 205, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(201, 203, 207, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 159, 64)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(54, 162, 235)',
+                        'rgb(153, 102, 255)',
+                        'rgb(201, 203, 207)'
+                    ],
                   borderWidth: 1
                 }]
             },
@@ -122,6 +124,15 @@
                 ticks: {
                   precision: 0
                 }
+              },
+              plugins: {
+                legend: {
+                  position: 'top',
+                },
+                title: {
+                  display: true,
+                  text: title
+                }
               }
             }
             
@@ -129,7 +140,7 @@
         
     }
 
-    function drawPieChart(id_tag, labels, data, label){
+    function drawPieChart(id_tag, labels, data, label, title){
       const ctx = document.getElementById(id_tag).getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'pie',
@@ -139,16 +150,14 @@
                     label: label,
                     data: data,
                     backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(255, 0, 195, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(159, 255, 102, 0.2)',
-                    'rgba(152, 104, 23, 0.2)',
-                    'rgba(255, 159, 64, 0.2)',
-                    ],
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(255, 159, 64, 0.2)',
+                        'rgba(255, 205, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(201, 203, 207, 0.2)'
+                    ]
                     
                 }]
             },
@@ -160,7 +169,7 @@
                 },
                 title: {
                   display: true,
-                  text: 'Tag Frequency'
+                  text: title
                 }
               }
             }
@@ -170,17 +179,22 @@
     }
 
 </script>
+
 <div class="row">
   <div class="col-md-6 col-lg-4 p-2 my-5">
     <canvas id="data1" width="400" height="400"></canvas>
   </div>
-  <div class="col-md-6 col-lg-4 p-2 mb-5">
+  <div class="col-md-6 col-lg-4 p-2 my-5">
     <canvas id="data2" width="400" height="400"></canvas>
   </div>
-  <div class="col-md-6 col-lg-4 p-2 mb-5">
+  <div class="col-md-6 col-lg-4 p-2 my-5">
     <canvas id="data3" width="400" height="400"></canvas>
   </div>
 </div>
- <br>
 
+<h3>Linked Accounts</h3>
+{% for user in  user.profile.sharedProfiles.all %}
+{{ user }}<br>
+{% endfor %}
+ 
 {% endblock content %}
